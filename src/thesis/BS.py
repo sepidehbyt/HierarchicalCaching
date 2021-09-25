@@ -36,7 +36,7 @@ class BaseStationThesis:
     def is_snm(self, f):
         self.observation_window[f, t_observation - 1] = self.observation_window[f, t_observation - 1] + 1
         # return f >= 5000
-        return len(np.where(self.observation_window[f] != 0)) < snm_window or np.sum(self.observation_window[f]) <= rth_thesis
+        return len(np.where(self.observation_window[f] != 0)[0]) < snm_window and np.sum(self.observation_window[f]) <= rth_thesis
 
     def next_slot_observation(self):
         self.observation_window = np.roll(self.observation_window, -1)

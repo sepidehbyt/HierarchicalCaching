@@ -67,7 +67,7 @@ class ThesisSimulation:
                 print(f)
             if self.BSs[bs].is_cached(f) and self.cloud_unit.just_is_cached(f, size):
                 print(f)
-            if is_snm and self.BSs[bs].is_cached(f):
+            if self.BSs[bs].is_cached(f):
                 delivery_time = sys_time + size / bs_dr
                 delivery_type = 'bs'
             # checks cu
