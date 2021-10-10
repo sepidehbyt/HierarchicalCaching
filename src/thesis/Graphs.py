@@ -7,6 +7,11 @@ sim_days = cfg.sys_simulation_days
 train_days = cfg.sys_train_generation_days
 
 
+def get_title():
+    return ' config snm_lifespan ' + str(cfg.snm_lifespan) + ' snm_rate ' + str(cfg.snm_new_arrival_rate) +\
+           ' irm_rate' + str(cfg.irm_arrival_rate)
+
+
 def plot_stuff(thesis_deliveries, paper_deliveries):
     cu_t, bs_t, os_t, irm_t, snm_t, tot_t = plot_each(thesis_deliveries)
     cu_p, bs_p, os_p, irm_p, snm_p, tot_p = plot_each(paper_deliveries)
@@ -16,6 +21,14 @@ def plot_stuff(thesis_deliveries, paper_deliveries):
 
 def plot_stuff_(thesis_deliveries):
     cu_t, bs_t, os_t, irm_t, snm_t, tot_t = plot_each(thesis_deliveries)
+
+
+def plot_2d_array(array, x_title, y_title, title):
+    plt.plot(array[:, 0], array[:, 1], color='blue')
+    plt.title(title + get_title())
+    plt.xlabel(x_title)
+    plt.ylabel(y_title)
+    plt.show()
 
 
 def plot_both_delivery(cu_t, bs_t, os_t, cu_p, bs_p, os_p):
@@ -116,4 +129,21 @@ def plot_each(deliveries):
     plt.ylabel("Delivery Type")
     plt.show()
 
-    return cu, bs, os, irm, snm, tot
+    print(cu)
+
+    return cu, bs, os, irm, snm, totdef
+
+
+def plot_all_stuff(thesis, paper_best, paper_worst, titles):
+
+    plotdata = pd.DataFrame({
+        "thesis": thesis,
+        "paper WC": paper_worst,
+        "paper BC": paper_best,
+        "paper AVG": (paper_worst + paper_best) / 2},
+        index=titles)
+    plotdata.plot(kind="bar")
+    plt.title("Hit rate for implementation of paper and project")
+    plt.xlabel("Algorithms")
+    plt.ylabel("Hit Rate")
+    plt.show()

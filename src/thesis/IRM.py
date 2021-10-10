@@ -6,21 +6,22 @@ import random
 import config as cfg
 from PoissonProcess import generate_fix_rate
 
+
 mean_size = cfg.irm_mean_content_size
-number_of_requests = cfg.irm_number_contents
 skewness = cfg.irm_skewness
-arrival_rate = cfg.irm_arrival_rate
 rth_thesis = cfg.rth_thesis
 
 
-def calc_zipf_distribution():
+def calc_zipf_distribution(number_of_requests):
     omega = 1 / np.sum(1 / pow(i + 1, skewness) for i in range(number_of_requests))
     return np.stack(omega / pow(i+1, skewness) for i in range(number_of_requests))
 
 
-def generate_irm_requests(sim_days):
-    proba_dist = calc_zipf_distribution()
+def generate_irm_requests(sim_days, arrival_rate):
+    number_of_requests = cfg.irm_number_contents
+    proba_dist = calc_zipf_distribution(number_of_requests)
     irm_rate = proba_dist * arrival_rate
+
     # request_sizes = np.random.poisson(mean_size, number_of_requests) + 1
     request_sizes = np.ones(number_of_requests)
     requests = []
@@ -33,6 +34,7 @@ def generate_irm_requests(sim_days):
 
 
 def generate_number_of_irm_fill(observation_window):
+    number_of_requests = cfg.irm_number_contents
     proba_dist = calc_zipf_distribution()
     irm_rate = proba_dist * arrival_rate
     requests = []
@@ -50,6 +52,7 @@ def generate_number_of_irm_fill(observation_window):
 
 
 def generate_number_of_irm_train(sim_days, observation_window):
+    number_of_requests = cfg.irm_number_contents
     proba_dist = calc_zipf_distribution()
     irm_rate = proba_dist * arrival_rate
     requests = []

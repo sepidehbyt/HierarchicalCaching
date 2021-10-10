@@ -62,8 +62,7 @@ class CloudUnit:
                 break
             f = int(cost[i, 0])
             size = self.contents_sizes[f]
-            if storage + size <= self.cu_repository_size \
-                    and len(np.where(self.observation_window[f] != 0)[0]) >= cloud_:
+            if storage + size <= self.cu_repository_size:
                 self.cache_f(f, size)
                 storage = storage + size
         pass
@@ -103,7 +102,6 @@ class ControlUnit:
         self.ws_window = np.roll(self.ws_window, -1)
         self.ws_window[0, t_observation - 1] = self.calculate_ws()
         fraction = float(np.round(self.ws_mlp.predict(self.ws_window), 2))
-        print(fraction)
         popularity = self.irm_mlp.predict(self.observation_window[:, 1:t_observation + 1])
         best_num = round(self.bs_num * (self.bs_size * (1 - fraction)))
         cost = np.zeros((self.req_num, 2))

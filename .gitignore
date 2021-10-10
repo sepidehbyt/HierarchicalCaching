@@ -139,3 +139,5 @@ cython_debug/
 
 # app
 ./sim
+./src/thesis/irm_data.csv
+./src/thesis/w_s_data.csv

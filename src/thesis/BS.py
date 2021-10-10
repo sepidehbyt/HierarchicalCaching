@@ -6,6 +6,7 @@ from LRU import LRUCache
 
 t_observation = cfg.sys_observation_window_days
 rth_thesis = cfg.rth_thesis
+rth_paper = cfg.rth_paper
 snm_window = cfg.train_min_window_threshold
 
 
@@ -23,9 +24,10 @@ class BaseStationThesis:
 
     def restart(self, bs_repository_size):
         self.bs_repository_size = bs_repository_size
-        self.cache = LRUCache(self.bs_repository_size)
+        self.cache = LRUCache(bs_repository_size)
         self.observation_window[:, 0:t_observation] = self.init_observation_window
-        self.next_slot_observation()
+        self.observation_window = np.roll(self.observation_window, -1)
+        self.observation_window[:, t_observation - 1] = 0
 
     def is_cached(self, f):
         return self.cache.get(f) != -1
@@ -36,11 +38,13 @@ class BaseStationThesis:
     def is_snm(self, f):
         self.observation_window[f, t_observation - 1] = self.observation_window[f, t_observation - 1] + 1
         # return f >= 5000
-        return len(np.where(self.observation_window[f] != 0)[0]) < snm_window and np.sum(self.observation_window[f]) <= rth_thesis
+        return len(np.where(self.observation_window[f] != 0)[0]) < snm_window \
+               and np.sum(self.observation_window[f]) <= rth_paper
 
     def next_slot_observation(self):
         self.observation_window = np.roll(self.observation_window, -1)
         self.observation_window[:, t_observation - 1] = 0
+        self.cache = LRUCache(self.bs_repository_size)
 
 
 class BaseStationPaper:

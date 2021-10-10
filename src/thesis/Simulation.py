@@ -13,6 +13,7 @@ from BS import BaseStationThesis
 from BS import BaseStationPaper
 from CU import ControlUnit
 from CU import CloudUnit
+import random
 import heapq as hq
 
 
@@ -27,7 +28,7 @@ os_dr = cfg.os_data_rate
 # content_sizes still not figured out completely
 class ThesisSimulation:
 
-    def __init__(self, req_num, train_window, observation_window, bs_count, tot_cache_size, size_fraction):
+    def __init__(self, req_num, train_window, observation_window, bs_count, tot_cache_size, size_fraction, bs_sizes):
 
         self.bs_count = bs_count
         self.tot_cache_size = tot_cache_size
@@ -36,8 +37,13 @@ class ThesisSimulation:
 
         self.cloud_unit = CloudUnit(self.cu_cache_size, req_num, train_window, observation_window)
         self.BSs = []
+
         for i in range(bs_count):
-            self.BSs.append(BaseStationThesis(req_num, self.bs_cache_size, observation_window))
+            if bs_sizes is not None:
+                self.BSs.append(BaseStationThesis(req_num, bs_sizes[i] - self.cu_cache_size / bs_count,
+                                                  observation_window))
+            else:
+                self.BSs.append(BaseStationThesis(req_num, self.bs_cache_size, observation_window))
 
     def sim(self, requests):
         deliveries = []
@@ -63,10 +69,6 @@ class ThesisSimulation:
             # checks if f is snm/irm
             is_snm = self.BSs[bs].is_snm(f)
             # check bs
-            if is_snm and self.cloud_unit.just_is_cached(f, size):
-                print(f)
-            if self.BSs[bs].is_cached(f) and self.cloud_unit.just_is_cached(f, size):
-                print(f)
             if self.BSs[bs].is_cached(f):
                 delivery_time = sys_time + size / bs_dr
                 delivery_type = 'bs'
@@ -90,7 +92,9 @@ class ThesisSimulation:
         print(bs_cache_size, cu_cache_size)
         return bs_cache_size, cu_cache_size
 
-    def restart_net(self):
+    def restart_net(self, fraction):
+        self.size_fraction = fraction
+        self.bs_cache_size, self.cu_cache_size = self.calc_cache_sizes()
         self.cloud_unit.restart(self.cu_cache_size)
         for i in range(self.bs_count):
             self.BSs[i].restart(self.bs_cache_size)
@@ -98,8 +102,9 @@ class ThesisSimulation:
 
 class PaperSimulation:
 
-    def __init__(self, req_num, train_window, ws_window, observation_window, bs_count, tot_cache_size):
+    def __init__(self, req_num, train_window, ws_window, observation_window, bs_count, tot_cache_size, sharing_percent, bs_sizes):
 
+        self.sharing_list = self.create_sharing_list(bs_count, sharing_percent)
         self.bs_count = bs_count
         self.tot_cache_size = tot_cache_size
         self.bs_cache_size = round(tot_cache_size / bs_count)
@@ -109,8 +114,12 @@ class PaperSimulation:
         self.control_unit.next_slot_observation()
         bs_irm = int(len(irm) / self.bs_count)
         self.BSs = []
+
         for i in range(self.bs_count):
-            bs = BaseStationPaper(req_num, self.bs_cache_size, fraction)
+            if bs_sizes is not None:
+                bs = BaseStationPaper(req_num, bs_sizes[i], fraction)
+            else:
+                bs = BaseStationPaper(req_num, self.bs_cache_size, fraction)
             self.BSs.append(bs)
             bs.cache_irm_f(irm[i * bs_irm: (i + 1) * bs_irm], 1)
 
@@ -145,7 +154,7 @@ class PaperSimulation:
             # checks another BSs
             else:
                 for i in range(self.bs_count):
-                    if i != bs:
+                    if self.sharing_list[bs][i] == 1:
                         if self.BSs[i].is_cached(f):
                             delivery_time = sys_time + size / cu_dr
                             delivery_type = 'cu'
@@ -155,3 +164,17 @@ class PaperSimulation:
                     self.BSs[bs].cache_f(f, size)
             hq.heappush(deliveries, (f, sys_time, delivery_time, delivery_type))
         return np.array(deliveries)
+
+    def create_sharing_list(self, bs_count, sharing_percent):
+        sharing_list = np.zeros((bs_count, bs_count))
+        for i in range(bs_count):
+            shares = random.sample(range(1, bs_count + 1), sharing_percent)
+            for share in shares:
+                sharing_list[i][share - 1] = 1
+            if sharing_list[i][i] == 1:
+                sharing_list[i][i] = 0
+                for j in range(bs_count):
+                    if j != i and sharing_list[i][j] != 1:
+                        sharing_list[i][j] = 1
+                        break
+        return sharing_list
