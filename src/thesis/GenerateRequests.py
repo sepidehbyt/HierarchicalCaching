@@ -6,10 +6,13 @@ from SNM import generate_snm_requests
 
 def generate_sim_requests(sim_days, number_of_bs, snm_arrival_rate, irm_arrival_rate, irm_snm):
     # (ts, f, size, bs)
-    irm_rate = irm_arrival_rate * number_of_bs
+    # irm_rate = irm_arrival_rate * number_of_bs
+    irm_rate = irm_arrival_rate
+    # snm_arrival_rate = snm_arrival_rate / number_of_bs
     if irm_snm is not None:
         irm_rate = irm_snm[0] * irm_rate
         snm_arrival_rate = irm_snm[1] * snm_arrival_rate
+    print('irm snm rate: ', irm_rate, snm_arrival_rate)
     irm = generate_irm_requests(sim_days, irm_rate)
     requests_list = generate_snm_requests(sim_days, number_of_bs, snm_arrival_rate)
     bs = 0
@@ -18,4 +21,9 @@ def generate_sim_requests(sim_days, number_of_bs, snm_arrival_rate, irm_arrival_
         bs = bs + 1
         if bs == number_of_bs:
             bs = 0
+    requests_list.sort(key=sort_list)
     return requests_list
+
+
+def sort_list(item):
+    return item[0]

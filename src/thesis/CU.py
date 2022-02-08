@@ -2,7 +2,6 @@ import numpy as np
 import math
 import random
 import config as cfg
-from MLP import MultilayerPerceptron
 
 t_observation = cfg.sys_observation_window_days
 rth_thesis = cfg.rth_thesis
@@ -13,9 +12,9 @@ snm_window = cfg.train_min_window_threshold
 # content_sizes still not figured out completely
 class CloudUnit:
 
-    def __init__(self, cu_repository_size, req_num, data, observation_window_temp):
+    def __init__(self, cu_repository_size, req_num, irm_mlp, observation_window_temp):
         self.cu_repository_size = cu_repository_size
-        self.mlp = MultilayerPerceptron(data, False, 'irm')
+        self.mlp = irm_mlp
         self.cache = {}
         self.req_num = req_num
         self.observation_window = np.zeros((req_num, t_observation))
@@ -74,11 +73,10 @@ class CloudUnit:
 
 class ControlUnit:
 
-    def __init__(self, bs_num, bs_size, req_num, data_w_s, data_irm, observation_window_temp):
-        self.irm_mlp = MultilayerPerceptron(data_irm, False, 'irm')
-        self.ws_mlp = MultilayerPerceptron(data_w_s, False, 'w_s')
-        self.bs_num = bs_num
-        self.bs_size = bs_size
+    def __init__(self, bs_tot_size, req_num, irm_mlp, ws_mlp, data_w_s, observation_window_temp):
+        self.irm_mlp = irm_mlp
+        self.ws_mlp = ws_mlp
+        self.bs_tot_size = bs_tot_size
         self.req_num = req_num
         col_ws = data_w_s.shape[0]
         self.ws_window = np.zeros((1, t_observation))
@@ -103,7 +101,7 @@ class ControlUnit:
         self.ws_window[0, t_observation - 1] = self.calculate_ws()
         fraction = float(np.round(self.ws_mlp.predict(self.ws_window), 2))
         popularity = self.irm_mlp.predict(self.observation_window[:, 1:t_observation + 1])
-        best_num = round(self.bs_num * (self.bs_size * (1 - fraction)))
+        best_num = round(self.bs_tot_size * (1 - fraction))
         cost = np.zeros((self.req_num, 2))
         for i in range(self.req_num):
             cost[i, 0] = i

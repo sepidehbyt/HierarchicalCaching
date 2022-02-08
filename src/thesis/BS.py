@@ -33,6 +33,8 @@ class BaseStationThesis:
         return self.cache.get(f) != -1
 
     def cache_f(self, f, size):
+        # if self.is_snm(f):
+        # if f >= 5000:
         self.cache.put(f, size)
 
     def is_snm(self, f):
